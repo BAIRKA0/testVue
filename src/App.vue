@@ -1,85 +1,66 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+  <div class="main">
+    <button @click="openModal">Открыть</button>
+    <span v-if="selectedFinalId">ID: {{ selectedFinalId }}</span>
+    <Modal 
+        v-if="isModalVisible"
+        :visible="isModalVisible"
+        title="Выберите папку"
+        @close="closeModal"
+        @confirm="confirmSelection"
+    >
+        <FolderTree :folders="mockFolders" @select="selectFolder(1)" />
+    </Modal>
+  </div>
 </template>
 
+<script setup lang="ts">
+import Modal from './components/Modal.vue';
+import FolderTree from './components/FolderTree.vue';
+import { ref, computed } from 'vue';
+import type { Folder } from './types/Folder.ts';
+import { folderStore } from './stores/folderStore';
+
+const isModalVisible = ref<boolean>(false);
+const selectedId = computed(()=> folderStore.selectedId)
+const selectFolder = folderStore.selectFolder
+const selectedFinalId = ref<Number | null>(null)
+
+const folder = (id: number, name: string, children: Folder[]):Folder => ({id: id, name: name, children: children})
+const mockFolders = ref<Folder[]>([
+    folder(1,'Папка 1',[
+        folder(2,'Папка 1.1',[]),
+        folder(3,'Папка 1.2',[
+            folder(4,'Папка 1.2.1', [])
+        ])
+    ]),
+    folder(5,'Папка 2',[])
+])
+const openModal = () => {
+    selectFolder(selectedFinalId.value)
+    isModalVisible.value = true
+};
+const closeModal = () => {isModalVisible.value = false};
+const confirmSelection = () => {
+    console.log('ID папки:', selectedFinalId.value);
+    selectedFinalId.value = selectedId.value;
+    closeModal();
+};
+
+</script>
+
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
+.main {
     display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; 
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+button {
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
 }
 </style>
